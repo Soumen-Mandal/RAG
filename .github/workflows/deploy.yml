@@ -12,9 +12,10 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-    - name: Authenticate to GCP
+    - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
         workload_identity_provider: "projects/655119496782/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
@@ -34,4 +35,6 @@ jobs:
           --image us-central1-docker.pkg.dev/vertex-ai-learning-480916/rag-repo/rag-api:latest \
           --region us-central1 \
           --platform managed \
-          --allow-unauthenticated
+          --allow-unauthenticated \
+          --memory 4Gi \
+          --cpu 2
