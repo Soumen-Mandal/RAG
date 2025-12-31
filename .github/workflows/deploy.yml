@@ -26,7 +26,7 @@ jobs:
 
     - name: Build & Push Docker Image
       run: |
-        docker build -t us-central1-docker.pkg.dev/vertex-ai-learning-480916/rag-repo/rag-api:latest ./deploy
+        docker build -t us-central1-docker.pkg.dev/vertex-ai-learning-480916/rag-repo/rag-api:latest ./deployment
         docker push us-central1-docker.pkg.dev/vertex-ai-learning-480916/rag-repo/rag-api:latest
 
     - name: Deploy to Cloud Run
