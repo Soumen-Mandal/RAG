@@ -10,28 +10,29 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write   # 🔴 REQUIRED for Workload Identity
+      id-token: write   # REQUIRED for Workload Identity
 
     steps:
     - name: Checkout source
       uses: actions/checkout@v4
 
-    # 🔐 AUTHENTICATE TO GOOGLE CLOUD (MOST IMPORTANT)
+    # 1️⃣ Authenticate to GCP and get ACCESS TOKEN
     - name: Authenticate to Google Cloud
+      id: auth
       uses: google-github-actions/auth@v2
       with:
         workload_identity_provider: "projects/655119496782/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
         service_account: "github-cloudrun-sa@vertex-ai-learning-480916.iam.gserviceaccount.com"
+        token_format: "access_token"
 
-    # 🔍 VERIFY AUTH (optional but very helpful)
-    - name: Verify gcloud auth
-      run: gcloud auth list
+    # 2️⃣ Login Docker explicitly using access token (THIS WAS MISSING)
+    - name: Docker login to Artifact Registry
+      run: |
+        echo "${{ steps.auth.outputs.access_token }}" | \
+        docker login -u oauth2accesstoken --password-stdin \
+        https://us-central1-docker.pkg.dev
 
-    # 🔑 CONFIGURE DOCKER TO USE GCP CREDENTIALS
-    - name: Configure Docker for Artifact Registry
-      run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-
-    # 🐳 BUILD & PUSH IMAGE
+    # 3️⃣ Build & Push image
     - name: Build & Push Docker Image
       run: |
         docker build \
@@ -40,7 +41,7 @@ jobs:
           deployment
         docker push us-central1-docker.pkg.dev/vertex-ai-learning-480916/rag-repo/rag-api:latest
 
-    # 🚀 DEPLOY TO CLOUD RUN
+    # 4️⃣ Deploy to Cloud Run
     - name: Deploy to Cloud Run
       run: |
         gcloud run deploy rag-api \
