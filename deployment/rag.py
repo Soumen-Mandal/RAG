@@ -144,14 +144,19 @@ class RAGRetriever:
 
 class GeminiRAG:
     def __init__(self):
-        key = os.getenv("VERTEX_AI_KEY_PATH")
         project = os.getenv("VERTEX_AI_PROJECT_ID")
         location = os.getenv("VERTEX_AI_LOCATION", "us-central1")
 
-        creds = service_account.Credentials.from_service_account_file(key)
-        vertexai.init(project=project, location=location, credentials=creds)
+        if not project:
+            # Local mode – Gemini disabled
+            self.model = None
+            print("⚠️ GeminiRAG disabled (no Vertex AI config found)")
+            return
 
+        # Cloud Run / GCP mode – use IAM (no key file)
+        vertexai.init(project=project, location=location)
         self.model = GenerativeModel("gemini-2.5-flash")
+        print("✅ GeminiRAG initialized with Vertex AI")
 
     def generate(self, query: str, docs: List[Dict[str, Any]]):
         context = "\n\n".join(
@@ -200,6 +205,14 @@ class RAGPipeline:
 
     def query(self, question: str, top_k=5):
         docs = self.retriever.retrieve(question, top_k)
+        if self.llm.model is None:
+            return {
+                "query": question,
+                "answer": "Gemini is not configured in local mode.",
+                "num_sources": len(docs),
+                "sources": docs
+            }
+
         answer = self.llm.generate(question, docs)
 
         return {
